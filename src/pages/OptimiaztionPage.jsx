@@ -29,7 +29,7 @@ const OptimizationPage = () => {
       return;
     }
 
-    const response = await fetch("http://localhost:8000/optimize", {
+    const response = await fetch("https://adspendoptimizer.onrender.com/optimize", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
