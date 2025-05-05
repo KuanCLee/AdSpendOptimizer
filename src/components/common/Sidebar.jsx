@@ -47,8 +47,7 @@ import {
 		  {isSidebarOpen && (
 			<img
 			  src='public/images/Astellas_logo.png'
-			  alt='Astellas Logo'
-			  className='w-36 mx-auto my-6'
+			  alt=''
 			/>
 		  )}
   
