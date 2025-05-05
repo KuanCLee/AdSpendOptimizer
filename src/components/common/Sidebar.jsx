@@ -46,8 +46,8 @@ import {
 		  {/* Conditionally render logo */}
 		  {isSidebarOpen && (
 			<img
-			  src='public/images/Astellas_logo.png'
-			  alt=''
+				src={"/images/Astellas_logo.png"}
+			  alt='logo'
 			/>
 		  )}
   
