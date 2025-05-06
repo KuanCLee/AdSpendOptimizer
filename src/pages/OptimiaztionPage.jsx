@@ -175,57 +175,12 @@ const OptimizationPage = () => {
 
         <button
           onClick={handleOptimize}
-          className="mt-5 p-2 bg-blue-500 text-white rounded"
-        >
+          className="mt-5 mb-10 p-2 bg-blue-500 text-white rounded"
+          >
           Optimize!
         </button>
 
         {/* Optimization Table */}
-        <div className="overflow-x-auto mb-12">
-          <table className="w-full table-auto border border-gray-200">
-            <thead className="bg-gray-100">
-              <tr>
-                <th className="p-2 border">Tactic</th>
-                <th className="p-2 border">Starting Spend</th>
-                <th className="p-2 border">New Spend</th>
-                <th className="p-2 border">Optimized Change</th>
-                <th className="p-2 border">ROI</th>
-              </tr>
-            </thead>
-            <tbody>
-              {["PDE", "Email", "PaidSearch"].map((tactic) => {
-                const newSpend =
-                  tactic === "PDE"
-                    ? optimizationResult.spend_A
-                    : tactic === "Email"
-                    ? optimizationResult.spend_B
-                    : optimizationResult.spend_C;
-                return (
-                  <tr key={tactic}>
-                    <td className="p-2 border">{tactic}</td>
-                    <td className="p-2 border">
-                      <input
-                        type="number"
-                        className="w-full border rounded px-2 py-1"
-                        value={startingSpends[tactic]}
-                        onChange={(e) =>
-                          handleStartingSpendChange(tactic, e.target.value)
-                        }
-                      />
-                    </td>
-                    <td className="p-2 border">${newSpend.toFixed(2)}</td>
-                    <td className="p-2 border">
-                      {getOptimizedChange(startingSpends[tactic], newSpend)}
-                    </td>
-                    <td className="p-2 border">
-                      {getROI(newSpend, estimatedReturn[tactic])}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
         <OptimizationTable
           startingSpends={startingSpends}
           optimizationResult={optimizationResult}
