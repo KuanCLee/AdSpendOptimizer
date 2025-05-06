@@ -2,7 +2,7 @@ import { BadgeDollarSign, Pill } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState } from "react";
 import Header from "../components/common/Header";
-import StatCard from "../components/common/StatCard";
+import StatCard from "../components/common/StatCard_Style_2";
 import OptimizationTable from "../components/optimization/OptimizationTable";
 
 const OptimizationPage = () => {
@@ -77,16 +77,16 @@ const OptimizationPage = () => {
   
 
   return (
-    <div className='flex-1 overflow-auto relative z-10'>
-      <Header title="Optimization Page" />
-      <div className="flex-1 overflow-auto relative z-10 w-full">
-      <main className="max-w-7xl mx-auto py-6 px-4 lg:px-8 h-full w-full">
+<div className="flex flex-col h-screen relative z-10 bg-gray-900 ">
+<Header title="Optimization Page" />
+<div className="flex-1 overflow-auto relative z-10 w-full">
+<main className="max-w-7xl mx-auto py-6 px-4 lg:px-8 h-full w-full">
 
         {/* Toggle Option */}
         <div className="mb-10">
-          <label className="block text-2xl font-medium mb-10">How Do You Want to Optimize?</label>
+          <label className="block text-gray-100 text-xl font-medium mb-10">How Do You Want to Optimize?</label>
           <div className="flex gap-6">
-            <label className="flex items-center space-x-2">
+            <label className="flex items-center space-x-2 block text-gray-100" >
               <input
                 type="radio"
                 value="budget"
@@ -95,7 +95,7 @@ const OptimizationPage = () => {
               />
               <span>Highest Return Within Budget</span>
             </label>
-            <label className="flex items-center space-x-2">
+            <label className="flex items-center space-x-2 block text-gray-100">
               <input
                 type="radio"
                 value="return"
@@ -108,10 +108,10 @@ const OptimizationPage = () => {
         </div>
 
         {/* Input Field */}
-        <div className="mb-10">
+        <div className="mb-10"> 
           {mode === "budget" ? (
             <div>
-              <label htmlFor="budget" className="block text-2xl font-medium mb-2">
+              <label htmlFor="budget" className="block text-gray-100 font-medium mb-2">
                 Enter Budget:
               </label>
               <input
@@ -125,7 +125,7 @@ const OptimizationPage = () => {
             </div>
           ) : (
             <div>
-              <label htmlFor="return" className="block text-2xl font-medium mb-2">
+              <label htmlFor="return" className="block text-gray-100 font-medium mb-2">
                 Enter Target Return:
               </label>
               <input
@@ -141,8 +141,10 @@ const OptimizationPage = () => {
         </div>
 
         {/* Stat Cards */}
+
         <motion.div
-          className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-2 mb-8"
+          className="bg-gray-800 bg-opacity-50 backdrop-filter backdrop-blur-lg shadow-lg
+            rounded-xl p-6 border border-gray-700 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-2 mb-8"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1 }}
@@ -175,12 +177,12 @@ const OptimizationPage = () => {
 
         <button
           onClick={handleOptimize}
-          className="mt-5 mb-10 p-2 bg-blue-500 text-white rounded"
+          className="mt-5 mb-10 px-6 py-3 text-lg font-semibold bg-emerald-500 text-gray-100 rounded-xl shadow-md hover:bg-emerald-600 transition duration-200"
           >
           Optimize!
         </button>
-
-        {/* Optimization Table */}
+      {/* OptimizationTable */}
+      <div className="flex-1 overflow-auto pb-8"> {/* Added flex-1 here */}
         <OptimizationTable
           startingSpends={startingSpends}
           optimizationResult={optimizationResult}
@@ -189,6 +191,8 @@ const OptimizationPage = () => {
           getOptimizedChange={getOptimizedChange}
           getROI={getROI}
         />
+      </div>
+
       </main>
     </div>
   </div>
