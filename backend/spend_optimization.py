@@ -81,6 +81,9 @@ class SpendOptimization:
                 "spend_B": spend_B,
                 "spend_C": spend_C,
                 "total_return": total_return,
+                "return_A": sum(df["MROI_A_cumulative"][i] * vars_A[i].varValue for i in range(len(spend_options))),
+                "return_B": sum(df["MROI_B_cumulative"][i] * vars_B[i].varValue for i in range(len(spend_options))),
+                "return_C": sum(df["MROI_C_cumulative"][i] * vars_C[i].varValue for i in range(len(spend_options))),
                 "budget": self.budget
             }
         elif self.method == 'min_budget_for_NBRx':
@@ -126,6 +129,9 @@ class SpendOptimization:
                 "spend_B": spend_B,
                 "spend_C": spend_C,
                 "total_return": final_return,
+                "return_A": sum(df["MROI_A_cumulative"][i] * vars_A[i].varValue for i in range(len(spend_options))),
+                "return_B": sum(df["MROI_B_cumulative"][i] * vars_B[i].varValue for i in range(len(spend_options))),
+                "return_C": sum(df["MROI_C_cumulative"][i] * vars_C[i].varValue for i in range(len(spend_options))),
                 "budget": spend_A + spend_B + spend_C
             }
         

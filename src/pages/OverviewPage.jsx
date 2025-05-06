@@ -181,7 +181,7 @@ const OverviewPage = () => {
           onChange={handleOptionChange}
           className="w-full border border-gray-300 rounded-lg p-2"
         >
-          <option value="all">All Data</option>
+          <option value="all">– Select an Option –</option>
           <option value="quarter">Quarter</option>
           <option value="yyyymm">Month</option>
         </select>

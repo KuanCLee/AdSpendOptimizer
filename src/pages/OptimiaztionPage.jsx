@@ -1,4 +1,4 @@
-import { BadgeDollarSign, Pill  } from "lucide-react";
+import { BadgeDollarSign, Pill } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState } from "react";
 import Header from "../components/common/Header";
@@ -16,6 +16,19 @@ const OptimizationPage = () => {
   const [mode, setMode] = useState("budget"); // "budget" or "return"
   const [budget, setBudget] = useState("");
   const [targetReturn, setTargetReturn] = useState("");
+
+  const [startingSpends, setStartingSpends] = useState({
+    PDE: 0,
+    Email: 0,
+    PaidSearch: 0,
+  });
+
+  const handleStartingSpendChange = (tactic, value) => {
+    setStartingSpends((prev) => ({
+      ...prev,
+      [tactic]: parseFloat(value) || 0,
+    }));
+  };
 
   const handleOptimize = async () => {
     let body = {};
@@ -44,6 +57,23 @@ const OptimizationPage = () => {
       console.error("Optimization failed");
     }
   };
+
+  const getOptimizedChange = (start, end) => {
+    if (start === 0) return "—";
+    return `${(((end - start) / start) * 100).toFixed(1)}%`;
+  };
+
+  const getROI = (spend, returnAmount) => {
+    if (spend === 0) return "—";
+    return (returnAmount / spend).toFixed(2);
+  };
+
+  const estimatedReturn = {
+    PDE: optimizationResult.return_A || 0,
+    Email: optimizationResult.return_B || 0,
+    PaidSearch: optimizationResult.return_C || 0,
+  };
+  
 
   return (
     <div className="flex-1 overflow-auto relative z-10">
@@ -108,6 +138,53 @@ const OptimizationPage = () => {
           )}
         </div>
 
+        {/* Optimization Table */}
+        <div className="overflow-x-auto mb-12">
+          <table className="w-full table-auto border border-gray-200">
+            <thead className="bg-gray-100">
+              <tr>
+                <th className="p-2 border">Tactic</th>
+                <th className="p-2 border">Starting Spend</th>
+                <th className="p-2 border">New Spend</th>
+                <th className="p-2 border">Optimized Change</th>
+                <th className="p-2 border">ROI</th>
+              </tr>
+            </thead>
+            <tbody>
+              {["PDE", "Email", "PaidSearch"].map((tactic) => {
+                const newSpend =
+                  tactic === "PDE"
+                    ? optimizationResult.spend_A
+                    : tactic === "Email"
+                    ? optimizationResult.spend_B
+                    : optimizationResult.spend_C;
+                return (
+                  <tr key={tactic}>
+                    <td className="p-2 border">{tactic}</td>
+                    <td className="p-2 border">
+                      <input
+                        type="number"
+                        className="w-full border rounded px-2 py-1"
+                        value={startingSpends[tactic]}
+                        onChange={(e) =>
+                          handleStartingSpendChange(tactic, e.target.value)
+                        }
+                      />
+                    </td>
+                    <td className="p-2 border">${newSpend.toFixed(2)}</td>
+                    <td className="p-2 border">
+                      {getOptimizedChange(startingSpends[tactic], newSpend)}
+                    </td>
+                    <td className="p-2 border">
+                      {getROI(newSpend, estimatedReturn[tactic])}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+
         {/* Stat Cards */}
         <motion.div
           className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-2 mb-8"
@@ -116,19 +193,19 @@ const OptimizationPage = () => {
           transition={{ duration: 1 }}
         >
           <StatCard
-            name="Spend A"
+            name="Spend PDE"
             icon={BadgeDollarSign}
             value={`$${optimizationResult.spend_A.toFixed(2)}`}
             color="#eab308"
           />
           <StatCard
-            name="Spend B"
+            name="Spend Email"
             icon={BadgeDollarSign}
             value={`$${optimizationResult.spend_B.toFixed(2)}`}
             color="#eab308"
           />
           <StatCard
-            name="Spend C"
+            name="Spend Paid Search"
             icon={BadgeDollarSign}
             value={`$${optimizationResult.spend_C.toFixed(2)}`}
             color="#eab308"
