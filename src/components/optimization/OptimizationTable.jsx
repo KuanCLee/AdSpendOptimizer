@@ -77,13 +77,16 @@ const OptimizationTable = ({
                   </td>
                   <td className={`${newSpend < 0 ? "text-red-600" : "text-green-500"} px-6 py-4 whitespace-nowrap`}>
                     ${newSpend.toFixed(2)}
-                    </td>
-                    <td className={`${getOptimizedChange(startingSpends[tactic], newSpend) < 0 ? "text-red-600" : "text-green-500"} px-6 py-4 whitespace-nowrap`}>
-                      {getOptimizedChange(startingSpends[tactic], newSpend)}
-                    </td>
-                    <td className={`${getROI(newSpend, estimatedReturn[tactic]) < 0 ? "text-red-600" : "text-green-500"} px-6 py-4 whitespace-nowrap`}>
-                      {getROI(newSpend, estimatedReturn[tactic])}
                   </td>
+
+                  <td className={`${parseFloat(getOptimizedChange(startingSpends[tactic], newSpend)) < 0 ? "text-red-600" : "text-green-500"} px-6 py-4 whitespace-nowrap`}>
+                    {getOptimizedChange(startingSpends[tactic], newSpend)}
+                  </td>
+
+                  <td className={`${getROI(newSpend, estimatedReturn[tactic]) < 0 ? "text-red-600" : "text-green-500"} px-6 py-4 whitespace-nowrap`}>
+                    {getROI(newSpend, estimatedReturn[tactic])}
+                  </td>
+
                 </motion.tr>
               );
             })}
