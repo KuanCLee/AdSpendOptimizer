@@ -31,7 +31,7 @@ const OptimizationTable = ({
 
   return (
     <motion.div
-      className="bg-white shadow-lg rounded-xl p-6 border border-pink-200"
+      className="bg-pink shadow-lg rounded-xl p-6 border border-pink-200"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.2 }}

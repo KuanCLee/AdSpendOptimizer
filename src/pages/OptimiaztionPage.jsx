@@ -77,49 +77,10 @@ const OptimizationPage = () => {
   
 
   return (
-		<div className='flex-1 relative z-10 overflow-auto'>
+    <div className='flex-1 overflow-auto relative z-10'>
       <Header title="Optimization Page" />
 
       <main className="max-w-7xl mx-auto py-6 px-4 lg:px-8">
-        {/* Stat Cards */}
-        <motion.div
-          className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-2 mb-8"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1 }}
-        >
-          <StatCard
-            name="Spend PDE"
-            icon={BadgeDollarSign}
-            value={`$${optimizationResult.spend_A.toFixed(2)}`}
-            color="#eab308"
-          />
-          <StatCard
-            name="Spend Email"
-            icon={BadgeDollarSign}
-            value={`$${optimizationResult.spend_B.toFixed(2)}`}
-            color="#eab308"
-          />
-          <StatCard
-            name="Spend Paid Search"
-            icon={BadgeDollarSign}
-            value={`$${optimizationResult.spend_C.toFixed(2)}`}
-            color="#eab308"
-          />
-          <StatCard
-            name="Total Return"
-            icon={Pill}
-            value={`${optimizationResult.total_return.toFixed(2)}`}
-            color="#4CAF50"
-          />
-        </motion.div>
-
-        <button
-          onClick={handleOptimize}
-          className="mt-5 p-2 bg-blue-500 text-white rounded"
-        >
-          Optimize!
-        </button>
 
         {/* Toggle Option */}
         <div className="mb-10">
@@ -178,6 +139,46 @@ const OptimizationPage = () => {
             </div>
           )}
         </div>
+
+        {/* Stat Cards */}
+        <motion.div
+          className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-2 mb-8"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1 }}
+        >
+          <StatCard
+            name="Spend PDE"
+            icon={BadgeDollarSign}
+            value={`$${optimizationResult.spend_A.toFixed(2)}`}
+            color="#eab308"
+          />
+          <StatCard
+            name="Spend Email"
+            icon={BadgeDollarSign}
+            value={`$${optimizationResult.spend_B.toFixed(2)}`}
+            color="#eab308"
+          />
+          <StatCard
+            name="Spend Paid Search"
+            icon={BadgeDollarSign}
+            value={`$${optimizationResult.spend_C.toFixed(2)}`}
+            color="#eab308"
+          />
+          <StatCard
+            name="Total Return"
+            icon={Pill}
+            value={`${optimizationResult.total_return.toFixed(2)}`}
+            color="#4CAF50"
+          />
+        </motion.div>
+
+        <button
+          onClick={handleOptimize}
+          className="mt-5 p-2 bg-blue-500 text-white rounded"
+        >
+          Optimize!
+        </button>
 
         {/* Optimization Table */}
         <div className="overflow-x-auto mb-12">
