@@ -3,8 +3,10 @@ import pandas as pd
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from typing import Optional
-
+from typing import Optional, Dict, Any
+import os
+from pulp import LpStatus, value
+from typing import Optional, Dict, Any, Union
 
 app = FastAPI()
 
@@ -17,136 +19,163 @@ app.add_middleware(
 )
 
 class SpendOptimization:
-    def __init__(self, budget, target_return, method='return_optimization'):
+    def __init__(self, budget, channelLimits, frozen_channels_data, brand):
 
         self.budget = budget
-        self.target_return = target_return
-        self.method = method
+        self.bounds_dict = channelLimits
+        self.frozen_channels_data = frozen_channels_data
+        self.brand = brand
+
 
     def run(self):
-        spend_options = [0, 100, 200, 300, 400, 500]
-        df = pd.DataFrame({
-            "Spend": spend_options,
-            "MROI_A": [0, 2.5, 2.0, 1.8, 1.5, 1.2],
-            "MROI_B": [0, 1.5, 1.8, 2.0, 2.2, 2.5],
-            "MROI_C": [0, 2.2, 1.9, 1.6, 1.3, 1.1]
-        })
 
-        channels = [col for col in df.columns if col.startswith("MROI_")]
-        returns = {}
-        for ch in channels:
-            cumulative = (df[ch] * df["Spend"]).cumsum()
-            returns[ch] = dict(zip(df["Spend"], cumulative))
+        file_path = './public/data/input.xlsx'
 
-        df = df.merge(pd.DataFrame(returns).reset_index(names='Spend'), on='Spend', suffixes=('', '_cumulative'))
+        df_Velo = pd.read_excel(file_path, sheet_name='Velo_Curve')
+        df_Velo.columns = [x.lower() + '_velo' for x in df_Velo.columns]
+        channels_Velo = df_Velo.columns.to_list()[1:]
+        # returns_Velo = {}
+        # for ch in channels_Velo:
+        #     cumulative = (df_Velo[ch] * df_Velo["spend"]).cumsum()
+        #     returns_Velo[ch] = dict(zip(df_Velo["spend"], cumulative))
+        # df_Velo = df_Velo.merge(pd.DataFrame(returns_Velo).reset_index(names='spend'), on='spend', suffixes=('', '_velo_cumulative'))
+
+        df_Grizzly = pd.read_excel(file_path, sheet_name='Grizzly_Curve')
+        df_Grizzly.columns = [x.lower() + '_grizzly' for x in df_Grizzly.columns]
+        channels_Grizzly = df_Grizzly.columns.to_list()[1:]
+        # returns_Grizzly = {}
+        # for ch in channels_Grizzly:
+        #     cumulative = (df_Grizzly[ch] * df_Grizzly["spend"]).cumsum()
+        #     returns_Grizzly[ch] = dict(zip(df_Grizzly["spend"], cumulative))
+        # df_Grizzly = df_Grizzly.merge(pd.DataFrame(returns_Grizzly).reset_index(names='spend'), on='spend', suffixes=('', '_grizzly_cumulative'))
+
+        if self.brand == 'all':
+            channels = [x for x in channels_Velo] + [x for x in channels_Grizzly]
+            df_place_hodler = df_Velo
+        elif self.brand == 'velo':
+            channels = [x for x in channels_Velo]
+            df_place_hodler = df_Velo
+        elif self.brand == 'grizzly':
+            channels = [x for x in channels_Grizzly]
+            df_place_hodler = df_Grizzly
+        else:
+            raise KeyError('unknown brand')
+
+        # Create the optimization problem
+        model = LpProblem("Maximize_Return_All", LpMaximize)
+
+        # Define decision variables for each channel and placement
+        vars = {
+            c: [LpVariable(f"{c}_{i}", cat=LpInteger, lowBound=0, upBound=1) for i in range(len(df_place_hodler))]
+            for c in channels
+        }
+
+        # Ensure that one placement is selected for each channel
+        for c in channels:
+            model += lpSum(vars[c]) <= 1
+
+        # Total spend constraint (ensure total spend does not exceed the available budget)
+        total_spend = lpSum(
+            vars[c][i] * df_place_hodler.iloc[i, 0]
+            for c in channels
+            for i in range(len(df_place_hodler))
+        )
+        model += total_spend <= self.budget  # Total spend must not exceed the available budget
+        print('total_spendtotal_spendtotal_spendtotal_spend',df_place_hodler.columns,self.budget,total_spend)
+        # Apply constraints for each channel (lower bounds, upper bounds, and frozen spends)
+        for c in channels:
+            spend_bounds = self.bounds_dict.get(c, {})
+            lower_bound = spend_bounds.get("lower")
+            upper_bound = spend_bounds.get("upper")
+            frozen_spend = self.frozen_channels_data.get(c, None)
+
+            spend_expr = lpSum(vars[c][i] * df_place_hodler.iloc[i, 0] for i in range(len(df_place_hodler)))
+
+            # Apply frozen spend if available
+            if frozen_spend not in [None, [], {}, '']:
+                model += spend_expr == int(frozen_spend), f"{c}_frozen_spend"
+            else:
+                # Apply lower bound constraint if it exists
+                if lower_bound and lower_bound.isdigit():
+                    model += spend_expr >= int(lower_bound), f"{c}_min_spend"
+
+                # Apply upper bound constraint if it exists
+                if upper_bound and upper_bound.isdigit():
+                    model += spend_expr <= int(upper_bound), f"{c}_max_spend"
+                # print('upper_bound',upper_bound)
+                # print('spend_expr',spend_expr)
+
+        # Build the objective expression dynamically based on the expected returns (from either Grizzly or Velo)
+        # total_return_expr = lpSum(
+        #     vars[c][i] * (
+        #         df_Grizzly[f"{c}_cumulative"][i] if "grizzly" in c else df_Velo[f"{c}_cumulative"][i]
+        #     )
+        #     for c in channels
+        #     for i in range(len(df_place_hodler))
+        # )
+
+        total_return_expr = lpSum(
+            vars[c][i] * (
+                df_Grizzly[c][i] if "grizzly" in c else df_Velo[c][i]
+            )  * i
+            for c in channels
+            for i in range(len(df_place_hodler))
+        )
+        model += total_return_expr  # Add the objective function to the model
+        print('=========modelmodelmodel===============', model)
+        # Solve the model
+        model.solve()
 
 
-        if self.method == 'return_optimization':
+        # Output results (the variable values after optimization)
+        # for v in model.variables():
+        #     print(f"{v.name} = {v.varValue}")
+        channel_spend = {}
+        channel_return = {}
 
-            model = LpProblem("Maximize_Return", LpMaximize)
-            vars_A = [LpVariable(f"A_{i}", cat=LpInteger, lowBound=0, upBound=1) for i in spend_options]
-            vars_B = [LpVariable(f"B_{i}", cat=LpInteger, lowBound=0, upBound=1) for i in spend_options]
-            vars_C = [LpVariable(f"C_{i}", cat=LpInteger, lowBound=0, upBound=1) for i in spend_options]
+        for c in channels:
+            spend = 0
+            ret = 0
+            for i in range(len(df_place_hodler)):
+                val = vars[c][i].varValue
+                if val is None:
+                    continue
+                if c.endswith("_velo"):
+                    spend += df_Velo.iloc[i, 0] * val
+                    ret += df_Velo[f"{c}"][i] * val * df_Velo.iloc[i, 0] 
+                elif c.endswith("_grizzly"):
+                    spend += df_Grizzly.iloc[i, 0] * val
+                    ret += df_Grizzly[f"{c}"][i] * val * df_Grizzly.iloc[i, 0] 
+            channel_spend[c] = spend
+            channel_return[c] = ret
 
-            model += lpSum(vars_A) == 1
-            model += lpSum(vars_B) == 1
-            model += lpSum(vars_C) == 1
+        total_return = sum(channel_return.values())
 
-            total_spend = (
-                lpSum([vars_A[i] * spend_options[i] for i in range(len(spend_options))]) +
-                lpSum([vars_B[i] * spend_options[i] for i in range(len(spend_options))]) +
-                lpSum([vars_C[i] * spend_options[i] for i in range(len(spend_options))])
-            )
-            model += total_spend <= self.budget
+        print("spend", channel_spend,
+            "return", channel_return,
+            "total_return", total_return,
+            "budget", self.budget)
 
-            return_A = lpSum([vars_A[i] * df["MROI_A_cumulative"][i] for i in range(len(spend_options))])
-            return_B = lpSum([vars_B[i] * df["MROI_B_cumulative"][i] for i in range(len(spend_options))])
-            return_C = lpSum([vars_C[i] * df["MROI_C_cumulative"][i] for i in range(len(spend_options))])
-            model += return_A + return_B + return_C
+        return {
+            "spend": channel_spend,
+            "return": channel_return,
+            "total_return": total_return,
+            "budget": self.budget
+        }
 
-            model.solve()
-
-            spend_A = sum(spend_options[i] * vars_A[i].varValue for i in range(len(spend_options)))
-            spend_B = sum(spend_options[i] * vars_B[i].varValue for i in range(len(spend_options)))
-            spend_C = sum(spend_options[i] * vars_C[i].varValue for i in range(len(spend_options)))
-            total_return = sum(
-                df["MROI_A_cumulative"][i] * vars_A[i].varValue +
-                df["MROI_B_cumulative"][i] * vars_B[i].varValue +
-                df["MROI_C_cumulative"][i] * vars_C[i].varValue
-                for i in range(len(spend_options))
-            )
-
-            return {
-                "spend_A": spend_A,
-                "spend_B": spend_B,
-                "spend_C": spend_C,
-                "total_return": total_return,
-                "return_A": sum(df["MROI_A_cumulative"][i] * vars_A[i].varValue for i in range(len(spend_options))),
-                "return_B": sum(df["MROI_B_cumulative"][i] * vars_B[i].varValue for i in range(len(spend_options))),
-                "return_C": sum(df["MROI_C_cumulative"][i] * vars_C[i].varValue for i in range(len(spend_options))),
-                "budget": self.budget
-            }
-        elif self.method == 'min_budget_for_NBRx':
-
-            model = LpProblem("Minimize_Budget", LpMinimize)
-
-            vars_A = [LpVariable(f"A_{i}", cat=LpInteger, lowBound=0, upBound=1) for i in spend_options]
-            vars_B = [LpVariable(f"B_{i}", cat=LpInteger, lowBound=0, upBound=1) for i in spend_options]
-            vars_C = [LpVariable(f"C_{i}", cat=LpInteger, lowBound=0, upBound=1) for i in spend_options]
-
-            model += lpSum(vars_A) == 1
-            model += lpSum(vars_B) == 1
-            model += lpSum(vars_C) == 1
-
-            total_spend = (
-                lpSum([vars_A[i] * spend_options[i] for i in range(len(spend_options))]) +
-                lpSum([vars_B[i] * spend_options[i] for i in range(len(spend_options))]) +
-                lpSum([vars_C[i] * spend_options[i] for i in range(len(spend_options))])
-            )
-            model += total_spend  # Objective: minimize this
-
-            return_A = lpSum([vars_A[i] * df["MROI_A_cumulative"][i] for i in range(len(spend_options))])
-            return_B = lpSum([vars_B[i] * df["MROI_B_cumulative"][i] for i in range(len(spend_options))])
-            return_C = lpSum([vars_C[i] * df["MROI_C_cumulative"][i] for i in range(len(spend_options))])
-            total_return = return_A + return_B + return_C
-
-            model += total_return >= self.target_return
-
-            model.solve()
-
-            spend_A = sum(spend_options[i] * vars_A[i].varValue for i in range(len(spend_options)))
-            spend_B = sum(spend_options[i] * vars_B[i].varValue for i in range(len(spend_options)))
-            spend_C = sum(spend_options[i] * vars_C[i].varValue for i in range(len(spend_options)))
-            final_return = sum(
-                df["MROI_A_cumulative"][i] * vars_A[i].varValue +
-                df["MROI_B_cumulative"][i] * vars_B[i].varValue +
-                df["MROI_C_cumulative"][i] * vars_C[i].varValue
-                for i in range(len(spend_options))
-            )
-
-            return {
-                "spend_A": spend_A,
-                "spend_B": spend_B,
-                "spend_C": spend_C,
-                "total_return": final_return,
-                "return_A": sum(df["MROI_A_cumulative"][i] * vars_A[i].varValue for i in range(len(spend_options))),
-                "return_B": sum(df["MROI_B_cumulative"][i] * vars_B[i].varValue for i in range(len(spend_options))),
-                "return_C": sum(df["MROI_C_cumulative"][i] * vars_C[i].varValue for i in range(len(spend_options))),
-                "budget": spend_A + spend_B + spend_C
-            }
-        
 # Define the Pydantic model to accept the budget in the request
 class OptimizationRequest(BaseModel):
+    channelLimits: Optional[Dict[str, Any]] = None
     budget: Optional[int] = None
-    target_return: Optional[int] = None
+    frozen_channels_data: Optional[Dict[str, Any]] = None  # Likely not an int
+    brand: Optional[Union[int, str]] = None
+
 
 @app.post("/optimize")
 def optimize(input: OptimizationRequest):
     if input.budget is not None:
-        opt = SpendOptimization(budget=input.budget, target_return=0, method='return_optimization')
-    elif input.target_return is not None:
-        opt = SpendOptimization(budget=999999, target_return=input.target_return, method='min_budget_for_NBRx')
+        opt = SpendOptimization(channelLimits=input.channelLimits ,frozen_channels_data=input.frozen_channels_data, budget=input.budget, brand=input.brand)
     else:
-        return {"error": "Please provide either a budget or a target return."}
+        return {"error": "Please provide a budget"}
 
     return opt.run()
