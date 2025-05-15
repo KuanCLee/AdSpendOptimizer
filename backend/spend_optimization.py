@@ -28,6 +28,8 @@ class SpendOptimization:
 
     def run(self):
         print("Current working directory:", os.getcwd())
+        file_path = os.path.join(os.getcwd(), 'public', 'data', 'input.xlsx')
+        print("Resolved path:", file_path, flush=True)
 
         file_path = '../public/data/input.xlsx'
         df_Velo = pd.read_excel(file_path, sheet_name='Velo_Curve')
