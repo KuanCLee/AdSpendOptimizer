@@ -95,7 +95,7 @@ const OptimizationPage = () => {
       return;
     }
     try {
-      const response = await fetch("https://127.0.0.1:8000/optimize", {
+      const response = await fetch("https://adspendoptimizer.onrender.com/optimize", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
