@@ -1,4 +1,5 @@
 pulp==3.1.1
+openpyxl
 pandas
 fastapi
 uvicorn[standard]
