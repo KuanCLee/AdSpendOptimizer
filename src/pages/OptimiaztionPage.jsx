@@ -30,7 +30,6 @@ const OptimizationPage = () => {
       other:{}
     },
   });
-
   const handleLimitChange = (channelName, limitType, value) => {
     setChannelLimits((prev) => ({
       ...prev,
@@ -40,9 +39,7 @@ const OptimizationPage = () => {
       },
     }));
   };
-
   const [selectedBrand, setSelectedBrand] = useState("all"); // Default to All
-
   const handleCheckboxChange = (brand, channelName) => {
     setFreezeedChannels((prevState) => ({
       ...prevState,
@@ -52,7 +49,6 @@ const OptimizationPage = () => {
       },
     }));
   };
-
   const handleSectionCheckboxChange = (brand, section) => {
     setFreezeedChannels((prevState) => ({
       ...prevState,
@@ -62,11 +58,9 @@ const OptimizationPage = () => {
       },
     }));
   };
-
   const handleBrandChange = (event) => {
     setSelectedBrand(event.target.value);
   };
-
   // Handle keydown event
   const handleKeyDown = (e) => {
     if (e.key === "Enter") {
@@ -74,70 +68,60 @@ const OptimizationPage = () => {
       handleOptimize();  // Trigger the optimize function
     }
   };
-
-const handleOptimize = async () => {
-  const parsedBudget = parseInt(budget);
-  if (isNaN(parsedBudget) || parsedBudget <= 0) {
-    console.warn("Invalid budget input.");
-    setOptimizationResult({
-      spend: {},
-      return: {},
-      total_return: 0,
-      budget: 0,
-    });
-    return;
-  }
-
-  const frozen_channels_data = await processSpendData();
-
-  // Calculate total frozen budget
-  const totalFrozen = Object.values(frozen_channels_data)
-    .filter((v) => typeof v === "number")
-    .reduce((sum, val) => sum + val, 0);
-
-  if (totalFrozen > parsedBudget) {
-    console.error(
-      `Frozen channels (${totalFrozen}) exceed the input budget (${parsedBudget}).`
-    );
-    alert(
-      `The frozen spend total (${totalFrozen}) exceeds the input budget (${parsedBudget}). Please adjust.`
-    );
-    return;
-  }
-
-  console.log("lockedChannels", lockedChannels);
-  console.log("frozen_channels_data", frozen_channels_data);
-
-  try {
-    const response = await fetch("http://127.0.0.1:8000/optimize", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        budget: parsedBudget,
-        brand: selectedBrand,
-        channelLimits: channelLimits,
-        frozen_channels_data: frozen_channels_data,
-      }),
-    });
-
-    if (response.ok) {
-      const result = await response.json();
-      setOptimizationResult(result);
-    } else {
-      console.error("Optimization failed");
+  const handleOptimize = async () => {
+    const parsedBudget = parseInt(budget);
+    if (isNaN(parsedBudget) || parsedBudget <= 0) {
+      console.warn("Invalid budget input.");
+      setOptimizationResult({
+        spend: {},
+        return: {},
+        total_return: 0,
+        budget: 0,
+      });
+      return;
     }
-  } catch (error) {
-    console.error("Fetch error:", error);
-  }
-};
+    const frozen_channels_data = await processSpendData();
+    // Calculate total frozen budget
+    const totalFrozen = Object.values(frozen_channels_data)
+      .filter((v) => typeof v === "number")
+      .reduce((sum, val) => sum + val, 0);
+    if (totalFrozen > parsedBudget) {
+      console.error(
+        `Frozen channels (${totalFrozen}) exceed the input budget (${parsedBudget}).`
+      );
+      alert(
+        `The frozen spend total (${totalFrozen}) exceeds the input budget (${parsedBudget}). Please adjust.`
+      );
+      return;
+    }
+    try {
+      const response = await fetch("http://127.0.0.1:8000/optimize", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          budget: parsedBudget,
+          brand: selectedBrand,
+          channelLimits: channelLimits,
+          frozen_channels_data: frozen_channels_data,
+        }),
+      });
 
+      if (response.ok) {
+        const result = await response.json();
+        setOptimizationResult(result);
+      } else {
+        console.error("Optimization failed");
+      }
+    } catch (error) {
+      console.error("Fetch error:", error);
+    }
+    };
   const channelRows = Object.keys(optimizationResult.spend).map((channel) => ({
     name: channel,
     // channel.charAt(0).toUpperCase() + channel.slice(1),
     spend: optimizationResult.spend[channel]?.toFixed(2) || "0.00",
     channelReturn: optimizationResult.return[channel]?.toFixed(2) || "0.00",
   }));
-
   const totalSpend = Object.values(optimizationResult.spend)
     .reduce((acc, value) => acc + parseFloat(value || 0), 0)
     .toFixed(2);
@@ -145,80 +129,64 @@ const handleOptimize = async () => {
     .reduce((acc, value) => acc + parseFloat(value || 0), 0)
     .toFixed(2);
   // Logic to filter and store spend data based on brand and section lock status
-
-
-const fetchFrozenChannels = async () => {
+  const fetchFrozenChannels = async () => {
   const response = await fetch("/data/Input.xlsx");
   const arrayBuffer = await response.arrayBuffer();
   const workbook = XLSX.read(arrayBuffer, { type: "array" });
-
   // Sheet index 3 for velo
   const veloSheet = workbook.Sheets[workbook.SheetNames[3]];
   const veloData = XLSX.utils.sheet_to_json(veloSheet, { header: 1 });
   const veloHeaders = veloData[0].slice(1).map((col) => ({ [`${col}_velo`]: null }));
-
   // Sheet index 4 for grizzly
   const grizzlySheet = workbook.Sheets[workbook.SheetNames[4]];
   const grizzlyData = XLSX.utils.sheet_to_json(grizzlySheet, { header: 1 });
   const grizzlyHeaders = grizzlyData[0].slice(1).map((col) => ({ [`${col}_grizzly`]: null }));
-
   return { veloHeaders, grizzlyHeaders };
-};
-
-useEffect(() => {
-  const loadFrozenData = async () => {
-    const { veloHeaders, grizzlyHeaders } = await fetchFrozenChannels();
-
-    setFreezeedChannels((prev) => ({
-      ...prev,
-      velo: {
-        ...prev.velo,
-        other: veloHeaders.reduce((acc, obj) => ({ ...acc, ...obj }), {}),
-      },
-      grizzly: {
-        ...prev.grizzly,
-        other: grizzlyHeaders.reduce((acc, obj) => ({ ...acc, ...obj }), {}),
-      },
-    }));
   };
+  useEffect(() => {
+    const loadFrozenData = async () => {
+      const { veloHeaders, grizzlyHeaders } = await fetchFrozenChannels();
 
-  loadFrozenData();
-}, []);
+      setFreezeedChannels((prev) => ({
+        ...prev,
+        velo: {
+          ...prev.velo,
+          other: veloHeaders.reduce((acc, obj) => ({ ...acc, ...obj }), {}),
+        },
+        grizzly: {
+          ...prev.grizzly,
+          other: grizzlyHeaders.reduce((acc, obj) => ({ ...acc, ...obj }), {}),
+        },
+      }));
+    };
 
+    loadFrozenData();
+  }, []);
+  const processSpendData = async () => {
+    const { veloHeaders, grizzlyHeaders } = await fetchFrozenChannels();
+    const allHeaders = [...veloHeaders, ...grizzlyHeaders];
+    const processedSpend = {};
+    allHeaders.forEach((channelObj) => {
+      const channel = Object.keys(channelObj)[0].toLowerCase(); // e.g., "Column1_velo"
+      const section = channel.toLowerCase().includes("dtc")
+        ? "dtc"
+        : channel.toLowerCase().includes("hcp")
+        ? "hcp"
+        : "other";
 
-const processSpendData = async () => {
-  const { veloHeaders, grizzlyHeaders } = await fetchFrozenChannels();
-  const allHeaders = [...veloHeaders, ...grizzlyHeaders];
-
-  const processedSpend = {};
-
-  allHeaders.forEach((channelObj) => {
-    const channel = Object.keys(channelObj)[0].toLowerCase(); // e.g., "Column1_velo"
-
-    const section = channel.toLowerCase().includes("dtc")
-      ? "dtc"
-      : channel.toLowerCase().includes("hcp")
-      ? "hcp"
-      : "other";
-
-    const brand = channel.toLowerCase().includes("velo") ? "velo" : "grizzly";
-
-    const channelData = optimizationResult.spend?.[channel];
-    const isChannelLocked = lockedChannels[brand]?.locked;
-    const isSectionLocked = lockedChannels[brand]?.[section];
-    const isChannelSpecificallyLocked = lockedChannels[brand]?.[channel];
-
-    if (isChannelSpecificallyLocked || isChannelLocked || isSectionLocked) {
-      processedSpend[channel] = channelData ?? 0;
-    } else {
-      processedSpend[channel] = null;
-    }
-  });
-
-  return processedSpend;
-};
-
-
+      const brand = channel.toLowerCase().includes("velo") ? "velo" : "grizzly";
+      const channelData = optimizationResult.spend?.[channel];
+      const isChannelLocked = lockedChannels[brand]?.locked;
+      const isSectionLocked = lockedChannels[brand]?.[section];
+      const isChannelSpecificallyLocked = lockedChannels[brand]?.[channel];
+      if (isChannelSpecificallyLocked || isChannelLocked || isSectionLocked) {
+        processedSpend[channel] = channelData ?? 0;
+      } else {
+        processedSpend[channel] = null;
+      }
+    });
+    return processedSpend;
+  };
   return (
     <div className="flex flex-col h-screen relative z-10">
       <Header title="Optimization Page" />

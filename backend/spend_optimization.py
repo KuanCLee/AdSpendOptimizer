@@ -26,29 +26,14 @@ class SpendOptimization:
         self.frozen_channels_data = frozen_channels_data
         self.brand = brand
 
-
     def run(self):
-
         file_path = './public/data/input.xlsx'
-
         df_Velo = pd.read_excel(file_path, sheet_name='Velo_Curve')
         df_Velo.columns = [x.lower() + '_velo' for x in df_Velo.columns]
         channels_Velo = df_Velo.columns.to_list()[1:]
-        # returns_Velo = {}
-        # for ch in channels_Velo:
-        #     cumulative = (df_Velo[ch] * df_Velo["spend"]).cumsum()
-        #     returns_Velo[ch] = dict(zip(df_Velo["spend"], cumulative))
-        # df_Velo = df_Velo.merge(pd.DataFrame(returns_Velo).reset_index(names='spend'), on='spend', suffixes=('', '_velo_cumulative'))
-
         df_Grizzly = pd.read_excel(file_path, sheet_name='Grizzly_Curve')
         df_Grizzly.columns = [x.lower() + '_grizzly' for x in df_Grizzly.columns]
         channels_Grizzly = df_Grizzly.columns.to_list()[1:]
-        # returns_Grizzly = {}
-        # for ch in channels_Grizzly:
-        #     cumulative = (df_Grizzly[ch] * df_Grizzly["spend"]).cumsum()
-        #     returns_Grizzly[ch] = dict(zip(df_Grizzly["spend"], cumulative))
-        # df_Grizzly = df_Grizzly.merge(pd.DataFrame(returns_Grizzly).reset_index(names='spend'), on='spend', suffixes=('', '_grizzly_cumulative'))
-
         if self.brand == 'all':
             channels = [x for x in channels_Velo] + [x for x in channels_Grizzly]
             df_place_hodler = df_Velo
@@ -60,20 +45,16 @@ class SpendOptimization:
             df_place_hodler = df_Grizzly
         else:
             raise KeyError('unknown brand')
-
         # Create the optimization problem
         model = LpProblem("Maximize_Return_All", LpMaximize)
-
         # Define decision variables for each channel and placement
         vars = {
             c: [LpVariable(f"{c}_{i}", cat=LpInteger, lowBound=0, upBound=1) for i in range(len(df_place_hodler))]
             for c in channels
         }
-
         # Ensure that one placement is selected for each channel
         for c in channels:
             model += lpSum(vars[c]) <= 1
-
         # Total spend constraint (ensure total spend does not exceed the available budget)
         total_spend = lpSum(
             vars[c][i] * df_place_hodler.iloc[i, 0]
@@ -81,16 +62,13 @@ class SpendOptimization:
             for i in range(len(df_place_hodler))
         )
         model += total_spend <= self.budget  # Total spend must not exceed the available budget
-        print('total_spendtotal_spendtotal_spendtotal_spend',df_place_hodler.columns,self.budget,total_spend)
         # Apply constraints for each channel (lower bounds, upper bounds, and frozen spends)
         for c in channels:
             spend_bounds = self.bounds_dict.get(c, {})
             lower_bound = spend_bounds.get("lower")
             upper_bound = spend_bounds.get("upper")
             frozen_spend = self.frozen_channels_data.get(c, None)
-
             spend_expr = lpSum(vars[c][i] * df_place_hodler.iloc[i, 0] for i in range(len(df_place_hodler)))
-
             # Apply frozen spend if available
             if frozen_spend not in [None, [], {}, '']:
                 model += spend_expr == int(frozen_spend), f"{c}_frozen_spend"
@@ -102,18 +80,6 @@ class SpendOptimization:
                 # Apply upper bound constraint if it exists
                 if upper_bound and upper_bound.isdigit():
                     model += spend_expr <= int(upper_bound), f"{c}_max_spend"
-                # print('upper_bound',upper_bound)
-                # print('spend_expr',spend_expr)
-
-        # Build the objective expression dynamically based on the expected returns (from either Grizzly or Velo)
-        # total_return_expr = lpSum(
-        #     vars[c][i] * (
-        #         df_Grizzly[f"{c}_cumulative"][i] if "grizzly" in c else df_Velo[f"{c}_cumulative"][i]
-        #     )
-        #     for c in channels
-        #     for i in range(len(df_place_hodler))
-        # )
-
         total_return_expr = lpSum(
             vars[c][i] * (
                 df_Grizzly[c][i] if "grizzly" in c else df_Velo[c][i]
@@ -122,17 +88,10 @@ class SpendOptimization:
             for i in range(len(df_place_hodler))
         )
         model += total_return_expr  # Add the objective function to the model
-        print('=========modelmodelmodel===============', model)
         # Solve the model
         model.solve()
-
-
-        # Output results (the variable values after optimization)
-        # for v in model.variables():
-        #     print(f"{v.name} = {v.varValue}")
         channel_spend = {}
         channel_return = {}
-
         for c in channels:
             spend = 0
             ret = 0
@@ -148,28 +107,24 @@ class SpendOptimization:
                     ret += df_Grizzly[f"{c}"][i] * val * df_Grizzly.iloc[i, 0] 
             channel_spend[c] = spend
             channel_return[c] = ret
-
         total_return = sum(channel_return.values())
-
         print("spend", channel_spend,
             "return", channel_return,
             "total_return", total_return,
             "budget", self.budget)
-
         return {
             "spend": channel_spend,
             "return": channel_return,
             "total_return": total_return,
             "budget": self.budget
         }
-
+    
 # Define the Pydantic model to accept the budget in the request
 class OptimizationRequest(BaseModel):
     channelLimits: Optional[Dict[str, Any]] = None
     budget: Optional[int] = None
-    frozen_channels_data: Optional[Dict[str, Any]] = None  # Likely not an int
+    frozen_channels_data: Optional[Dict[str, Any]] = None 
     brand: Optional[Union[int, str]] = None
-
 
 @app.post("/optimize")
 def optimize(input: OptimizationRequest):
