@@ -95,7 +95,7 @@ const OptimizationPage = () => {
       return;
     }
     try {
-      const response = await fetch("http://127.0.0.1:8000/optimize", {
+      const response = await fetch("https://api.render.com/deploy/srv-d0cjegodl3ps73e8qjrg?key=W6ef3YzOIf0/optimize", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
