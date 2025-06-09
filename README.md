@@ -10,7 +10,7 @@ We also provide features that enable users to allocate spend across self-defined
 
 Please use the link below to start your journey!
 
-https://ad-spend-optimizer.vercel.app/optimization
+[https://ad-spend-optimizer.vercel.app/optimization](https://ad-spend-optimizer-h9fnnfxl2-kuanclees-projects.vercel.app)
 
 Note: Since our backend code is hosted on a free source, when you go to the Optimization page and enter the budget, please allow 1 to 2 minutes for the backend to activate the first time. After it’s successfully activated, the loading speed will be much faster within the same active session.
 
