@@ -106,7 +106,7 @@ const Activity_Distribution = ({ selectedOption, selectedValue }) => {
   const [data, setData] = useState([]);
   const [processedData, setProcessedData] = useState([]);
   const [mappingData, setMappingData] = useState([]);
-  const [currentOption, setCurrentOption] = useState("dev");
+  const [currentOption, setCurrentOption] = useState("category");
 
   useEffect(() => {
     const loadData = async () => {

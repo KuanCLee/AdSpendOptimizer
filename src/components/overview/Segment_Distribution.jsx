@@ -109,7 +109,7 @@ const Segment_Distribution = ({ selectedOption, selectedValue, timelist }) => {
   const [data, setData] = useState([]);
   const [aggregated_table, setAggregatedTable] = useState({});
   const [mappingData, setMappingData] = useState([]);
-  const [currentOption, setCurrentOption] = useState("dev");
+  const [currentOption, setCurrentOption] = useState("category");
   const [filteredData, setFilteredData] = useState([]);
   const [loading, setLoading] = useState(true);  // Track loading state
 
