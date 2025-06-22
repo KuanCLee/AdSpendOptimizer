@@ -44,12 +44,16 @@ import {
 		  </motion.button>
   
 		  {/* Conditionally render logo */}
-		  {isSidebarOpen && (
-			<img
-				src={"/images/Astellas_logo.png"}
-			  alt='logo'
-			/>
-		  )}
+			{isSidebarOpen && (
+			<div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100px" }}>
+				<img
+				src="/images/Blend360_logo.png"
+				alt="logo"
+				style={{ width: "90px", height: "75px" }}
+				/>
+			</div>
+			)}
+
   
 		  {/* Navigation */}
 		  <nav className='mt-4 flex-grow'>
