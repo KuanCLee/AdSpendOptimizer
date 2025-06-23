@@ -44,7 +44,7 @@ import {
 		  </motion.button>
   
 		  {/* Conditionally render logo */}
-			{isSidebarOpen && (
+			{/* {isSidebarOpen && (
 			<div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100px" }}>
 				<img
 				src="/images/Blend360_logo.png"
@@ -52,7 +52,7 @@ import {
 				style={{ width: "90px", height: "75px" }}
 				/>
 			</div>
-			)}
+			)} */}
 
   
 		  {/* Navigation */}
