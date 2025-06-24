@@ -18,18 +18,18 @@ You can explore *what-if scenarios* to understand how different budget allocatio
 ---
 # 🚀 Run the App
 
-Start your journey here 👉 [https://ad-spend-optimizer-49nquzhwd-kuanclees-projects.vercel.app](https://ad-spend-optimizer-49nquzhwd-kuanclees-projects.vercel.app)
+Start your journey here 👉 [https://ad-spend-optimizer-git-master-kuanclees-projects.vercel.app](https://ad-spend-optimizer-git-master-kuanclees-projects.vercel.app)
 
 > Note: Since our backend code is hosted on a free source, when you go to the Optimization page and enter the budget, please allow 1 to 2 minutes for the backend to activate the first time. After it’s successfully activated, the loading speed will be much faster within the same active session.
 
 # 🖼️ What You’ll See
 
 ### 1. **Overview Page** – Track Marketing Performance 
-![image](https://github.com/user-attachments/assets/d1da888a-1ec2-439e-88f1-711c510b01be)
+![image](https://github.com/user-attachments/assets/0ff18c65-c5f8-48f0-b0d4-962ba016a9b4)
 
 ### 2. **Optimize Page** – Budget Optimization  
 
-![image](https://github.com/user-attachments/assets/5dc61b9e-0e72-4aac-b616-dbcd3cf80987)
+![image](https://github.com/user-attachments/assets/e0992f52-5d90-4d7a-b23c-cbef96ecd1db)
 
 # 🚀 Run This App Locally (Windows)
 
