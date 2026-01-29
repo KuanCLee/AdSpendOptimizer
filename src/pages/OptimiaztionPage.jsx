@@ -16,20 +16,22 @@ const OptimizationPage = () => {
   const [channelLimits, setChannelLimits] = useState({});
   const [processedSpendData, setProcessedSpendData] = useState({});
   const [budget, setBudget] = useState("");
-  const [lockedChannels, setFreezeedChannels] = useState({
-    velo: {
-      locked: false,
-      dtc: {}, // Freeze DTC section for Velop
-      hcp: {}, // Freeze HCP section for Velop
-      other:{}
-    },
-    grizzly: {
-      locked: false,
-      dtc: {}, // Freeze DTC section for Grizzly
-      hcp: {}, // Freeze HCP section for Grizzly
-      other:{}
-    },
-  });
+const [lockedChannels, setLockedChannels] = useState({
+velo: {
+locked: false,
+dtc: false,
+hcp: false,
+other: false,
+// individual channels will be dynamically added later
+},
+grizzly: {
+locked: false,
+dtc: false,
+hcp: false,
+other: false,
+// individual channels will be dynamically added later
+},
+});
   const handleLimitChange = (channelName, limitType, value) => {
     setChannelLimits((prev) => ({
       ...prev,
@@ -40,24 +42,25 @@ const OptimizationPage = () => {
     }));
   };
   const [selectedBrand, setSelectedBrand] = useState("all"); // Default to All
-  const handleCheckboxChange = (brand, channelName) => {
-    setFreezeedChannels((prevState) => ({
-      ...prevState,
-      [brand]: {
-        ...prevState[brand],
-        [channelName]: !prevState[brand][channelName],
-      },
-    }));
-  };
-  const handleSectionCheckboxChange = (brand, section) => {
-    setFreezeedChannels((prevState) => ({
-      ...prevState,
-      [brand]: {
-        ...prevState[brand],
-        [section]: !prevState[brand][section],
-      },
-    }));
-  };
+const handleCheckboxChange = (brand, channelName) => {
+  setLockedChannels((prevState) => ({
+    ...prevState,
+    [brand]: {
+      ...prevState[brand],
+      [channelName]: !prevState[brand][channelName],
+    },
+  }));
+};
+
+const handleSectionCheckboxChange = (brand, section) => {
+  setLockedChannels((prevState) => ({
+    ...prevState,
+    [brand]: {
+      ...prevState[brand],
+      [section]: !prevState[brand][section],
+    },
+  }));
+};
   const handleBrandChange = (event) => {
     setSelectedBrand(event.target.value);
   };
@@ -147,16 +150,21 @@ const OptimizationPage = () => {
     const loadFrozenData = async () => {
       const { veloHeaders, grizzlyHeaders } = await fetchFrozenChannels();
 
-      setFreezeedChannels((prev) => ({
-        ...prev,
-        velo: {
-          ...prev.velo,
-          other: veloHeaders.reduce((acc, obj) => ({ ...acc, ...obj }), {}),
-        },
-        grizzly: {
-          ...prev.grizzly,
-          other: grizzlyHeaders.reduce((acc, obj) => ({ ...acc, ...obj }), {}),
-        },
+      const veloChannels = veloHeaders.reduce((acc, obj) => {
+        const key = Object.keys(obj)[0];
+        acc[key] = false; // unchecked by default
+        return acc;
+      }, {});
+
+      const grizzlyChannels = grizzlyHeaders.reduce((acc, obj) => {
+        const key = Object.keys(obj)[0];
+        acc[key] = false; // unchecked by default
+        return acc;
+      }, {});
+
+      setLockedChannels((prev) => ({
+        velo: { ...prev.velo, ...veloChannels },
+        grizzly: { ...prev.grizzly, ...grizzlyChannels },
       }));
     };
 
